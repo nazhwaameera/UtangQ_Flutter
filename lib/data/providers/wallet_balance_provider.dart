@@ -16,11 +16,11 @@ class WalletBalanceProvider extends ChangeNotifier {
   // }
 
   Future<void> getUserWalletBalance(int userId) async {
-    if(userId == 0) {
-        print('User id invalid');
+    if (userId == 0) {
+      print('User id invalid');
     } else {
       try {
-        // print('This is the userId $userId');
+        // Attempt to retrieve the user's wallet
         Wallet userWallet = await GetUserWallet().execute(userId);
         _walletBalance = userWallet.walletBalance;
         notifyListeners(); // Notify listeners about the change in wallet balance
@@ -29,15 +29,17 @@ class WalletBalanceProvider extends ChangeNotifier {
         if (e is WalletNotFoundException) {
           // Handle wallet not found error
           print('User wallet not found, creating a new wallet...');
+          // Create the user's wallet
           await CreateWallet().execute(userId);
+          // Wait for a short delay to ensure the wallet creation is processed
+          await Future.delayed(Duration(seconds: 1));
           // Retry to get user wallet
-          Wallet? userWallet = await GetUserWallet().execute(userId);
-          if (userWallet == null) {
-            print(
-                'Failed to load wallet: Wallet still not found after creation');
-          } else {
+          try {
+            Wallet userWallet = await GetUserWallet().execute(userId);
             _walletBalance = userWallet.walletBalance;
             notifyListeners(); // Notify listeners about the change in wallet balance
+          } catch (e) {
+            print('Failed to load wallet: $e');
           }
         }
       }

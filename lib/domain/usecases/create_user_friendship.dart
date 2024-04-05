@@ -5,6 +5,7 @@ class CreateUserFriendship{
 
   Future<bool> execute(int userId) async {
     try{
+      print('Entering use case create friendship.');
       return await repository.createUserFriendship(userId);
     } catch (e) {
       print('Create friendship failed: $e');

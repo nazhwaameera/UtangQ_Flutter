@@ -118,6 +118,8 @@ class _ManageFriendshipPageState extends State<ManageFriendshipPage> {
 
       getUserFriends(_friendshipId);
       getUserNonFriends(_friendshipId);
+      await Provider.of<GreetingMessageProvider>(context, listen: false)
+          .getUserFriendship(userId);
       await Provider.of<FriendshipListProvider>(context, listen: false)
           .updatePendindFriendshipList(userId);
       await Provider.of<FriendshipListProvider>(context, listen: false)
@@ -165,6 +167,10 @@ class _ManageFriendshipPageState extends State<ManageFriendshipPage> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<GreetingMessageProvider>(context, listen: false)
+          .getUserFriendship(userId);
+    });
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: Container(

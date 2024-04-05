@@ -57,25 +57,26 @@ class GreetingMessageProvider extends ChangeNotifier {
   Future<void> getUserFriendship(int userId) async {
     if (userId == 0) {
       print('User id invalid, get user friendship');
-    } else {
-      try {
-        Friendship userFriendship = await GetUserFriendship().execute(userId);
-        _friendshipId = userFriendship.friendshipID;
-        notifyListeners();
-      } catch (e) {
-        print('Error retrieving user friendship :$e');
-        if (e is FriendshipNotFoundException) {
-          print('Friendship id not found, creating new friendship...');
-          await CreateUserFriendship().execute(_userId);
-          Friendship userFriendship = await GetUserFriendship().execute(
-              _userId);
-          if (userFriendship == null) {
-            print(
-                'Failed to load user friendship: Friendship still not found after creation');
-          } else {
-            _friendshipId = userFriendship.friendshipID;
-            notifyListeners();
-          }
+      return; // Exit early if user id is invalid
+    }
+
+    try {
+      Friendship userFriendship = await GetUserFriendship().execute(userId);
+      _friendshipId = userFriendship.friendshipID;
+      notifyListeners();
+    } catch (e) {
+      print('Error retrieving user friendship :$e');
+      if (e is FriendshipNotFoundException) {
+        print('Friendship id not found, creating new friendship...');
+        try {
+          await CreateUserFriendship().execute(userId);
+          // Wait for a short delay to ensure the friendship creation is processed
+          await Future.delayed(Duration(seconds: 1));
+          Friendship userFriendship = await GetUserFriendship().execute(userId);
+          _friendshipId = userFriendship.friendshipID;
+          notifyListeners();
+        } catch (e) {
+          print('Failed to create or load friendship: $e');
         }
       }
     }

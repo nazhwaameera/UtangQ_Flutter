@@ -18,7 +18,7 @@ abstract class UsersDataSource {
 
   Future<String> loginUser(String username, String password);
 
-  Future<String> getUserFriendship(int userId);
+  Future<Map<String, dynamic>> getUserFriendship(int userId);
 
   Future<String> getUserFriends(int friendshipId);
 
@@ -158,22 +158,28 @@ class RemoteUsersDataSource implements UsersDataSource {
   }
 
   @override
-  Future<String> getUserFriendship(int userId) async {
+  Future<Map<String, dynamic>> getUserFriendship(int userId) async {
     print('get user friendship for id : $userId');
     final url = Uri.parse('$baseUrl/Friendships/user/$userId');
     try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        return response.body;
-      } else if (response.statusCode == 404) {
-        throw FriendshipNotFoundException();
+        return {
+          'statusCode': response.statusCode,
+          'body': response.body,
+        };
       } else {
-        throw Exception(
-            'Failed to load user friendship: ${response.statusCode}');
+        return {
+          'statusCode': response.statusCode,
+          'body': '',
+        };
       }
     } catch (e) {
-      throw Exception('Failed to load user friendship: $e');
+      return {
+        'statusCode': -1, // Some default value to indicate error
+        'body': e.toString(),
+      };
     }
   }
 
@@ -213,7 +219,7 @@ class RemoteUsersDataSource implements UsersDataSource {
   Future<bool> createUserFriendship(int userId) async {
     try {
       final response =
-          await http.get(Uri.parse('$baseUrl/Friendships?userId=$userId'));
+          await http.post(Uri.parse('$baseUrl/Friendships?userId=$userId'));
 
       if (response.statusCode == 200) {
         return true;

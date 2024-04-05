@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hive_flutter/adapters.dart';
 import 'package:utangq_app/data/datasource/users_remote_ds.dart';
+import 'package:utangq_app/data/exception/friendship_404_exception.dart';
 import 'package:utangq_app/data/exception/wallet_404_exception.dart';
 import 'package:utangq_app/domain/entities/bill.dart';
 import 'package:utangq_app/domain/entities/bill_create.dart';
@@ -53,10 +54,17 @@ class UsersRepository {
   }
 
   Future<Friendship> getUserFriendship(int userId) async{
-    final response = jsonDecode(await remoteUsersDataSource.getUserFriendship(userId));
-    final result = Friendship.fromJson(response);
-    print('This is from repository ${result.userID}, ${result.friendshipID}');
-    return result;
+    final response = await remoteUsersDataSource.getUserFriendship(userId);
+    final statusCode = response['statusCode'] as int;
+    final responseBody = response['body'] as String;
+
+    if (statusCode == 200) {
+      return Friendship.fromJson(jsonDecode(responseBody));
+    } else if(statusCode == 404){
+      throw FriendshipNotFoundException();
+    } else {
+      throw Exception('Failed to load friendship: $statusCode - $responseBody');
+    }
   }
 
   Future<List<Users>> getUserFriends(int friendshipId) async{
@@ -92,6 +100,7 @@ class UsersRepository {
   }
 
   Future<bool> createUserFriendship(int userId) async {
+    print('Entering repository create friendship.');
     var response = await remoteUsersDataSource.createUserFriendship(userId);
     return response;
   }
